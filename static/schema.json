@@ -1,0 +1,230 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/chaitin/gamma/blob/master/static/schema.json",
+  "title": "POC Check",
+  "description": "A tool that checks XRay POC",
+  "type": "object",
+  "definitions": {
+    "row_request": {
+      "description": "tcp or udp request",
+      "type": "object",
+      "properties": {
+        "cache": {
+          "description": "cache package",
+          "type": "boolean"
+        },
+        "content": {
+          "description": "raw package content",
+          "type": "string"
+        },
+        "read_timeout": {
+          "description": "tcp read timeout",
+          "type": "integer"
+        }
+      },
+      "required": ["content"],
+      "additionalProperties": false
+    },
+    "http_request": {
+      "description": "http request",
+      "type": "object",
+      "properties": {
+        "cache": {
+          "description": "cache package",
+          "type": "boolean"
+        },
+        "method": {
+          "description": "request method",
+          "type": "string",
+          "enum": ["HEAD", "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "CONNECT", "MOVE", "TRACE", "PROPFIND"]
+        },
+        "path": {
+          "description": "request path",
+          "type": "string",
+          "pattern": "^/.*"
+        },
+        "headers": {
+          "description": "request HTTP headers",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "body": {
+          "description": "request body",
+          "type": "string"
+        },
+        "follow_redirects": {
+          "description": "This option determines whether the HTTP request will follow the jump",
+          "type": "boolean"
+        }
+      },
+      "required": ["method"],
+      "additionalProperties": false
+    },
+    "rule": {
+      "description": "A rule",
+      "type": "object",
+      "properties": {
+        "request": {
+          "description": "request object is related with transport",
+          "type": "object",
+          "oneOf": [{ "$ref": "#/definitions/row_request" }, { "$ref": "#/definitions/http_request" }]
+        },
+        "expression": {
+          "description": "a CEL expression what determines whether the vulnerability exists",
+          "type": "string"
+        },
+        "output": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["expression"],
+      "additionalProperties": false
+    },
+    "fingerprint_info": {
+      "description": "fingerprint info",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "ct product id",
+          "type": "string"
+        },
+        "name": {
+          "description": "product name",
+          "type": "string"
+        },
+        "type": {
+          "description": "product type",
+          "type": "string",
+          "enum": ["operating_system", "hardware", "system_bin", "web_application", "dependency", "other"]
+        },
+        "version": {
+          "description": "product version",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "detail": {
+      "description": "output details",
+      "type": "object",
+      "properties": {
+        "author": {
+          "description": "POC author",
+          "type": "string"
+        },
+        "links": {
+          "description": "some links that describe or reproduce the vulnerability",
+          "type": "array",
+          "items": {
+            "description": "link",
+            "type": "string",
+            "format": "iri"
+          },
+          "minItems": 1
+        },
+        "vulnerability": {
+          "description": "vulnerability info",
+          "type": "object",
+          "properties": {
+            "id": {
+              "description": "ct vulnerability id",
+              "type": "string"
+            },
+            "match": {
+              "description": "vulnerability match result",
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "fingerprint": {
+          "description": "fingerprint info",
+          "type": "object",
+          "properties": {
+            "infos": {
+              "description": "fingerprint info",
+              "type": "array",
+              "items": { "$ref": "#/definitions/fingerprint_info" }
+            },
+            "host_info": {
+              "description": "host info",
+              "type": "object",
+              "properties": {
+                "hostname": {
+                  "description": "hostname",
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "poc": {
+      "description": "poc definition",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "POC name",
+          "type": "string",
+          "pattern": "^(?:poc-yaml|custom|fingerprint-yaml)-[a-z0-9\\-]+$"
+        },
+        "manual": {
+          "description": "manual write",
+          "type": "boolean"
+        },
+        "transport": {
+          "description": "transport",
+          "type": "string",
+          "enum": ["tcp", "udp", "http"]
+        },
+        "set": {
+          "description": "set variables",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "rules": {
+          "description": "Rules",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/rule"
+          }
+        },
+        "expression": {
+          "description": "expression",
+          "type": "string"
+        },
+        "detail": { "$ref": "#/definitions/detail" },
+        "test": {
+          "description": "for unittest",
+          "type": "object",
+          "properties": {
+            "target": {
+              "description": "test env target",
+              "type": "string",
+              "format": "iri"
+            },
+            "skip": {
+              "description": "This option determines whether the test is skip",
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["name", "transport", "rules", "expression"]
+    }
+  },
+  "$ref": "#/definitions/poc",
+  "additionalProperties": false
+}
