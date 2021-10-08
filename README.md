@@ -4,7 +4,7 @@
 
 ## 😘 POC 语法
 
-json schema: [schema](./static/schema.json)
+json schema: [schema](./static/schema/schema.json)
 
 文档：https://docs.xray.cool/#/guide/poc
 

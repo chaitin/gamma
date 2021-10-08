@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/chaitin/gamma/blob/master/static/schema.json",
+  "$id": "https://raw.githubusercontent.com/chaitin/gamma/master/static/schema/schema-v2.json",
   "title": "POC Check",
   "description": "A tool that checks XRay POC",
   "type": "object",
