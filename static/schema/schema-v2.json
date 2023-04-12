@@ -1,11 +1,16 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
   "$id": "https://raw.githubusercontent.com/chaitin/gamma/master/static/schema/schema-v2.json",
   "title": "POC Check",
-  "description": "A tool that checks XRay POC",
-  "type": "object",
   "definitions": {
-    "row_request": {
+    "kv": {
+      "description": "variables",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "raw_request": {
       "description": "tcp or udp request",
       "type": "object",
       "properties": {
@@ -18,8 +23,12 @@
           "type": "string"
         },
         "read_timeout": {
-          "description": "tcp read timeout",
-          "type": "integer"
+          "description": "raw read timeout",
+          "type": "string"
+        },
+        "connection_id": {
+          "description": "raw send package use which connection",
+          "type": "string"
         }
       },
       "required": ["content"],
@@ -41,7 +50,7 @@
         "path": {
           "description": "request path",
           "type": "string",
-          "pattern": "^/.*"
+          "pattern": "^[/^].*"
         },
         "headers": {
           "description": "request HTTP headers",
@@ -57,6 +66,10 @@
         "follow_redirects": {
           "description": "This option determines whether the HTTP request will follow the jump",
           "type": "boolean"
+        },
+        "read_timeout": {
+          "description": "http response read timeout",
+          "type": "string"
         }
       },
       "required": ["method"],
@@ -69,18 +82,13 @@
         "request": {
           "description": "request object is related with transport",
           "type": "object",
-          "oneOf": [{ "$ref": "#/definitions/row_request" }, { "$ref": "#/definitions/http_request" }]
+          "oneOf": [{ "$ref": "#/definitions/raw_request" }, { "$ref": "#/definitions/http_request" }]
         },
         "expression": {
           "description": "a CEL expression what determines whether the vulnerability exists",
           "type": "string"
         },
-        "output": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
+        "output": { "$ref": "#/definitions/kv" }
       },
       "required": ["expression"],
       "additionalProperties": false
@@ -105,9 +113,17 @@
         "version": {
           "description": "product version",
           "type": "string"
+        },
+        "confidence": {
+          "description": "product check confidence",
+          "type": "integer"
+        },
+        "cpe": {
+          "description": "product cpe identifier",
+          "type": "string"
         }
       },
-      "additionalProperties": false
+      "additionalProperties": true
     },
     "detail": {
       "description": "output details",
@@ -168,31 +184,38 @@
       },
       "additionalProperties": true
     },
-    "poc": {
-      "description": "poc definition",
+    "info": {
+      "description": "info definition",
       "type": "object",
-      "properties": {
+      "properties":{
         "name": {
           "description": "POC name",
           "type": "string",
           "pattern": "^(?:poc-yaml|custom|fingerprint-yaml)-[a-z0-9\\-]+$"
         },
+        "binding": {
+          "description": "binding uuid",
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
         "manual": {
           "description": "manual write",
           "type": "boolean"
         },
+        "detail": { "$ref": "#/definitions/detail" }
+      },
+      "required": ["name"]
+    },
+    "script": {
+      "description": "script definition",
+      "type": "object",
+      "properties":{
         "transport": {
           "description": "transport",
           "type": "string",
           "enum": ["tcp", "udp", "http"]
         },
-        "set": {
-          "description": "set variables",
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
+        "set": { "$ref": "#/definitions/kv" },
         "rules": {
           "description": "Rules",
           "type": "object",
@@ -204,27 +227,34 @@
           "description": "expression",
           "type": "string"
         },
-        "detail": { "$ref": "#/definitions/detail" },
-        "test": {
-          "description": "for unittest",
+        "payloads": {
+          "description": "payloads variables",
           "type": "object",
           "properties": {
-            "target": {
-              "description": "test env target",
-              "type": "string",
-              "format": "iri"
-            },
-            "skip": {
-              "description": "This option determines whether the test is skip",
+            "continue": {
+              "description": "get result payload continue",
               "type": "boolean"
+            },
+            "payloads": {
+              "description": "This option determines whether the test is skip",
+              "type": "object",
+              "additionalProperties": { "$ref": "#/definitions/kv" }
             }
           },
           "additionalProperties": false
         }
       },
-      "required": ["name", "transport", "rules", "expression"]
+      "required": ["transport", "rules", "expression"]
+    },
+    "poc": {
+      "description": "A tool that checks XRay POC",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/definitions/info" },
+        { "$ref": "#/definitions/script" }
+      ],
+      "unevaluatedProperties": false
     }
   },
-  "$ref": "#/definitions/poc",
-  "additionalProperties": false
+  "$ref": "#/definitions/poc"
 }
